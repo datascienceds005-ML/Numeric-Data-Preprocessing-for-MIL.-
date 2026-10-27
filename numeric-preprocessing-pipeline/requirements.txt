@@ -1,0 +1,14 @@
+# Exact runtime pins (verified installed & compatible in the delivery environment).
+# Regenerate with: pip freeze | grep -iE '^(numpy|pandas|scipy|scikit-learn|polars|pyarrow|pydantic|PyYAML|typer|click|joblib|pandera)=='
+numpy==2.1.3
+pandas==2.2.3
+scipy==1.14.1
+scikit-learn==1.5.2
+polars==2.0.0
+pyarrow==26.0.0
+pydantic==2.12.5
+PyYAML==6.0.3
+typer==0.23.1
+click==8.1.8
+joblib==1.5.3
+pandera==0.34.1

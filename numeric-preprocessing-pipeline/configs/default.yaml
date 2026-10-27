@@ -1,0 +1,125 @@
+# ============================================================================
+# numprep default configuration — every key, annotated.
+# This file documents the FULL schema; all keys are optional (the pipeline runs
+# with built-in defaults identical to this file's values, minus the target).
+# Overlay order: defaults < this file < env (NUMPREP_SEED, NUMPREP_N_JOBS) < CLI.
+# ============================================================================
+
+run:
+  seed: 42                 # single global seed: splits, sampling, iterative imputer
+  n_jobs: -1               # worker count for parallel-capable steps
+  downcast: auto           # float64 -> float32: auto (guarded) | force | off
+
+input:
+  paths:                   # files, directories, or globs (sorted for determinism)
+    - "data/raw/*.csv"
+  delimiter: ","           # single character
+  encoding: utf-8-lossy    # utf-8 (strict) | utf-8-lossy (replace) | latin-1
+  has_header: true
+  na_tokens:               # strings read as null (empty fields are always null)
+    ["", "NA", "N/A", "null", "NULL", "NaN", "nan", "None", "?", "-", "--"]
+  dtypes: {}               # explicit overrides: {col: float32|float64|int64|int32|bool|string}
+  thousands_separator: null  # e.g. "," for "1,234.5" (must differ from delimiter)
+  currency_symbols: ["$", "%", "€", "£"]  # stripped before numeric casting
+  parentheses_negative: true  # "(3.5)" -> -3.5
+  numeric_min_castable_ratio: 0.5  # min fraction of castable values to become numeric
+  snapshot: true           # write the typed Parquet snapshot under <output>/snapshot
+
+target:
+  column: null             # set e.g. "target"; null = unsupervised passthrough
+  task: auto               # auto | classification | regression (split/report metadata)
+  drop_null_rows: true     # drop rows with a null target before the split
+
+split:
+  strategy: random         # random | stratified | group | chronological
+  ratios: {train: 0.7, val: 0.15, test: 0.15}  # renormalized if they don't sum to 1
+  time_column: null        # REQUIRED for chronological
+  time_format: null        # optional strptime format; null = ISO-8601 auto-parse
+  group_columns: []        # REQUIRED for group (no group spans two partitions)
+
+cleaning:
+  dedupe: true             # exact duplicates (pre-split; row-index excluded)
+  dedupe_subset: []        # empty = all columns except __row_index__
+  inf_to_nan: true         # ±inf -> null -> imputed later
+  non_negative_columns: [] # domain rules: negatives in these columns become null
+  temporal:                # past-only lag/rolling features (chronological only)
+    enabled: false
+    columns: []            # empty = all numeric features (ID-like excluded)
+    lags: []               # e.g. [1, 7]
+    rolling_windows: []    # e.g. [7]
+    rolling_stats: [mean]  # subset of mean|std|min|max
+    group_columns: []      # entity groups; empty = global timeline
+  # --- train-fitted column-drop policy (TrainOnlyColumnPruner) ---
+  null_column_threshold: 0.95  # drop columns with train null-rate > threshold
+  drop_constant_columns: true
+  drop_id_like: true
+  id_name_pattern: '(?i)^(id|.*[_-]id|uuid|guid|index|row_?num|.*[_-]num)$'
+  id_unique_ratio: 0.999   # integer/string columns with unique ratio >= this are ID-like
+
+preprocessing:             # ALL fitted on train only; val/test transformed
+  imputation:
+    strategy: median       # median | mean | constant | knn | iterative
+    constant_value: 0.0
+    knn_neighbors: 5
+    iterative_max_iter: 10
+    add_missing_indicators: true
+    max_indicators: 50     # cap; selected by null-count desc then name
+  outliers:
+    method: winsorize      # winsorize | iqr | zscore | none (clips, never drops rows)
+    lower_quantile: 0.01
+    upper_quantile: 0.99
+    iqr_k: 1.5
+    zscore_cap: 3.0
+  features:                # engineered features + generated catalog
+    log1p: []              # columns; signed variant auto-applied when train min < 0
+    ratios: []             # [{numerator: a, denominator: b, name: null}]
+    differences: []        # [{minuend: a, subtrahend: b}]
+    interactions: []       # [{left: a, right: b}]
+    polynomial: []         # [{column: a, degree: 2}]
+    safe_division_eps: 1.0e-12  # |denominator| < eps -> NaN -> train median
+    max_engineered: 200
+  selection:
+    variance_threshold: 0.0    # drop train-variance <= threshold (0 = constants)
+    correlation_threshold: 0.98
+    sample_size: 200000        # strided sample for correlations
+  scaling:
+    default: auto          # auto | standard | robust | minmax | power | quantile | none
+    overrides: {}          # {exact_column: kind}; overrides beat auto
+    exclude_patterns: ["^cat_", "__was_missing$"]  # never rescaled
+    skew_high: 1.0         # auto: |skew| >= high -> power (Yeo-Johnson)
+    skew_moderate: 0.5     # auto: |skew| >= moderate -> robust; else standard
+    quantile_output_distribution: normal
+    quantile_n_quantiles: 1000
+  encoding:
+    enabled: true
+    max_cardinality: 10    # object/bool columns with <= this many train categories
+    onehot_max_categories: 25
+    drop_high_cardinality: true  # otherwise they fail the output contract loudly
+
+audit:                     # report-only; NEVER drives fitted behavior
+  sample_size: 200000
+  max_corr_columns: 100    # correlation pairs skipped beyond this (with warning)
+  max_duplicate_scan_rows: 2000000  # exact scan below; sampled estimate above
+  corr_threshold: 0.9
+  leakage_corr_threshold: 0.95
+  leakage_name_pattern: '(?i)(^|_)(target|label|outcome|leak)'
+
+validation:
+  input:                   # enforced pre-clean; violations aggregate -> exit 3
+    enabled: true
+    required_columns: []
+    expected_numeric: []   # columns that must be numeric after ingestion
+    ranges: {}             # {col: {min: 0.0, max: 100.0}} (either bound optional)
+    max_null_rate: {}      # {col: ceiling} or {"*": default_ceiling}
+    allow_extra_columns: true
+    sample_rows: 1000000   # pandera range validation cap (strided sample)
+  output:                  # enforced post-transform; violations -> exit 4
+    forbid_nan_inf: true
+    require_nonempty_splits: true
+    consistent_schema: true
+    require_numeric_features: true
+
+output:
+  directory: "outputs/run"
+  compression: zstd        # zstd | snappy | gzip
+  export_csv: false        # also write CSV copies of the partitions

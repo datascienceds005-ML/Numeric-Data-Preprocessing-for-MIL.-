@@ -1,0 +1,24 @@
+# Example: time-ordered data with chronological split and past-only features.
+# python -m numprep run --config configs/example_timeseries.yaml \
+#     --input data/raw --output outputs/timeseries
+target:
+  column: target
+  task: regression
+
+split:
+  strategy: chronological
+  time_column: timestamp     # ISO-8601; set time_format for custom layouts
+  ratios: {train: 0.7, val: 0.15, test: 0.15}
+
+cleaning:
+  temporal:
+    enabled: true
+    lags: [1, 3]
+    rolling_windows: [5]
+    rolling_stats: [mean, std]
+    group_columns: []        # set e.g. [entity] for per-entity timelines
+  dedupe: true
+
+validation:
+  input:
+    max_null_rate: {"*": 0.5, "all_null_col": 1.0, "mostly_null": 0.99}

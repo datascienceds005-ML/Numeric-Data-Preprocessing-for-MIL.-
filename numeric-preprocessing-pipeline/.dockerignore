@@ -1,0 +1,24 @@
+# Keep the runtime image minimal: no VCS, caches, tests, data, or outputs.
+.git
+.github
+.gitlab-ci.yml
+.venv
+venv
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.hypothesis
+.coverage
+htmlcov
+tests
+docs
+reports
+data
+outputs
+configs/example_*.yaml
+scripts/dev_smoke_ingest_audit.py
+.dockerignore
+Makefile

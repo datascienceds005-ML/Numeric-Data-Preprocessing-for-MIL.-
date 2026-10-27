@@ -1,0 +1,29 @@
+# Example: binary/multiclass classification with a stratified split.
+# python -m numprep run --config configs/example_classification.yaml \
+#     --input data/raw --output outputs/classification
+target:
+  column: target
+  task: classification
+
+split:
+  strategy: stratified
+  ratios: {train: 0.7, val: 0.15, test: 0.15}
+
+preprocessing:
+  imputation:
+    strategy: median
+    add_missing_indicators: true
+  outliers:
+    method: winsorize
+  encoding:
+    enabled: true
+    max_cardinality: 12
+  scaling:
+    default: auto
+    overrides:
+      x_bimodal: robust   # pin one column; everything else stays skew-aware auto
+
+validation:
+  input:
+    # The synthetic generator deliberately ships pathological columns; exempt them.
+    max_null_rate: {"*": 0.5, "all_null_col": 1.0, "mostly_null": 0.99}

@@ -1,0 +1,102 @@
+{
+  "deterministic": {
+    "config_sha256": "767b5672a4d06d74ee7019ff5794c7073ee99da7cc72f6a897ebd100e7b637af",
+    "git_sha": "c5ccae3a2213795e13444a08ae184f9087f27a2d",
+    "ingestion": {
+      "columns": 22,
+      "rows": 5100,
+      "snapshot": "data.parquet"
+    },
+    "input_files": [
+      {
+        "name": "synthetic_messy.csv",
+        "rows": 5100,
+        "sha256": "b30970967e8347dd81def42bb031482f23a4431624a9681a720d536b6046d8b9"
+      }
+    ],
+    "library_versions": {
+      "numprep": "1.0.0",
+      "numpy": "2.1.3",
+      "pandas": "2.2.3",
+      "polars": "2.0.0",
+      "pyarrow": "26.0.0",
+      "pydantic": "2.12.5",
+      "python": "3.12.15",
+      "scikit-learn": "1.5.2"
+    },
+    "numprep_version": "1.0.0",
+    "output_files": {
+      "test": {
+        "columns": 31,
+        "name": "test.parquet",
+        "rows": 731,
+        "sha256": "44a94f97e6e46993196a1c77fb3073eff871c7147d249d9f0ec4f56e387e17a3"
+      },
+      "train": {
+        "columns": 31,
+        "name": "train.parquet",
+        "rows": 3414,
+        "sha256": "29026f3eafdbc0230e0a37034da21ffdf2ef4d62344f966209400023d0fe7965"
+      },
+      "val": {
+        "columns": 31,
+        "name": "val.parquet",
+        "rows": 732,
+        "sha256": "85e929cd6dbfddf31034ffb216d13da13968b533d9050e9a737e8e907ee02c68"
+      }
+    },
+    "preprocessor_sha256": "f96775b16926e763545ad7121f576ce9707f040dabc04b2e791e7fdb468a0340",
+    "seed": 42,
+    "skipped_files": [],
+    "split": {
+      "applied_ratios": {
+        "test": 0.15,
+        "train": 0.7,
+        "val": 0.15
+      },
+      "fallback": "rare class with 1 member(s) cannot be stratified",
+      "group_overlap_zero": null,
+      "near_duplicate_collisions": {},
+      "ratios_normalized": false,
+      "requested_ratios": {
+        "test": 0.15,
+        "train": 0.7,
+        "val": 0.15
+      },
+      "sizes": {
+        "test": 731,
+        "train": 3414,
+        "val": 732
+      },
+      "strategy": "random (stratified fallback)",
+      "target_distribution": {
+        "test": {
+          "max": 800000000.0,
+          "mean": 2735979.25,
+          "min": -800000000.0,
+          "std": 70947872.0
+        },
+        "train": {
+          "max": 800000000.0,
+          "mean": 1991799.5,
+          "min": -800000000.0,
+          "std": 60047972.0
+        },
+        "val": {
+          "max": 800000000.0,
+          "mean": 2732241.25,
+          "min": -800000000.0,
+          "std": 82327096.0
+        }
+      },
+      "target_task": "regression",
+      "time_ranges": null,
+      "warnings": [
+        "stratified split fell back to random: rare class with 1 member(s) cannot be stratified"
+      ]
+    }
+  },
+  "runtime": {
+    "note": "runtime block (timestamps/RSS) omitted from the committed sample; present in every real run"
+  }
+}

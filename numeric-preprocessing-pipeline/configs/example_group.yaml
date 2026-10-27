@@ -1,0 +1,15 @@
+# Example: group-aware splitting (an entity never spans two partitions).
+# python -m numprep run --config configs/example_group.yaml \
+#     --input data/raw --output outputs/group
+target:
+  column: target
+  task: regression
+
+split:
+  strategy: group
+  group_columns: [entity]
+  ratios: {train: 0.7, val: 0.15, test: 0.15}
+
+validation:
+  input:
+    max_null_rate: {"*": 0.5, "all_null_col": 1.0, "mostly_null": 0.99}
